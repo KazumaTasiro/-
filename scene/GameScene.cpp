@@ -75,7 +75,32 @@ void GameScene::Update() {
 	//MatrixIdentity(viewContainer2);
 	//MatrixInverse(inverseMatrix, &viewProjection_.matView);
 
+	float speedX = 0;
+	float speedY = 0;
+	float speedZ = 0;
+	if (DIK_A == 1) {
+		speedX -= 1;
+	}
+	if (DIK_D == 1) {
+		speedX += 1;
+	}
+	if (DIK_S == 1) {
+		speedZ += 1;
+	}
+	if (DIK_W == 1) {
+		speedZ -= 1;
+	}
+	if (DIK_UP == 1) {
+		speedZ -= 1;
+	}
+	if (DIK_DOWN == 1) {
+		speedZ += 1;
+	}
 
+
+	worldTransform_[1].translation_.x += speedX;
+	worldTransform_[1].translation_.y += speedY;
+	worldTransform_[1].translation_.z += speedZ;
 
 	MatrixIdentity(viewContainer);
 	MatrixIdentity(viewContainer2);
