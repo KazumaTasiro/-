@@ -92,9 +92,6 @@ void GameScene::Update() {
 	AfinMatRot(worldTransform_[1], viewContainer2);
 	//AfinMatRot(worldTransform_[1], viewP);
 	AfinTransform(worldTransform_[1]);
-	worldTransform_[1].matWorld_.m[3][0] = 0;
-	worldTransform_[1].matWorld_.m[3][1] = 0;
-	worldTransform_[1].matWorld_.m[3][2] = 0;
 	worldTransform_[1].TransferMatrix();
 
 	//内積の値
