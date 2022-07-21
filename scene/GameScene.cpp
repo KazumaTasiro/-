@@ -64,10 +64,10 @@ void GameScene::Initialize() {
 void GameScene::Update() {
 	debugCamera_->Update();
 	//デバックカメラの座標をとる変数
-	eyes = { debugCamera_->GetViewProjection().eye.x - 0,debugCamera_->GetViewProjection().eye.y - 0,debugCamera_->GetViewProjection().eye.z - 0 };
-	trans = { debugCamera_->GetViewProjection().target.x - 0,debugCamera_->GetViewProjection().target.y - 0,debugCamera_->GetViewProjection().target.z - 0 };
-	up = { 0.0f,1.0f,0.0f };
-
+	eyes = { debugCamera_->GetViewProjection().eye.x,debugCamera_->GetViewProjection().eye.y,debugCamera_->GetViewProjection().eye.z };
+	trans = { debugCamera_->GetViewProjection().target.x,debugCamera_->GetViewProjection().target.y,debugCamera_->GetViewProjection().target.z  };
+	/*up = { 0.0f,1.0f,0.0f };*/
+	viewP = { debugCamera_->GetViewProjection().up.x,debugCamera_->GetViewProjection().up.y,debugCamera_->GetViewProjection().up.z };
 	//カメラと法線の内積
 	intterProdict = Vec3Dot(&n1, &eyes);
 
@@ -79,32 +79,23 @@ void GameScene::Update() {
 
 	MatrixIdentity(viewContainer);
 	MatrixIdentity(viewContainer2);
-	GetInvRotateMat(&worldTransform_[1].translation_, &eyes, viewContainer, intterProdict);
-	MatrixInverse(viewContainer2, viewContainer);
+	viewContainer *= debugCamera_->GetViewProjection().matView;
+	//ビルボードを求める関数
+	GetInvRotateMat(&worldTransform_[1].translation_, &eyes, viewContainer2, viewP);
+
+	MatrixInverse(viewContainer, viewContainer);
+
+	/*MakeInverse(viewContainer2, viewContainer);*/
 	/*viewContainer2 *= viewContainer;*/
 	MatrixIdentity(worldTransform_[1].matWorld_);
-	//if (intterProdict < 0) {
-	//	for (int i = 0; i < 4; i++) {
-	//		for (int j = 0; j < 4; j++) {
-	//			viewContainer.m[i][j] *= -viewContainer.m[i][j];
-	//		}
-	//	}
-	//}
-	worldTransform_[1].matWorld_ *= viewContainer2;
-	worldTransform_[1].matWorld_ *= viewContainer;
-	worldTransform_[1].matWorld_ *= viewProjection_.matProjection;
-	/*worldTransform_[1].matWorld_ *= viewContainer2;*/
-	//AfinMatRot(worldTransform_[1], viewContainer);
+
+	AfinMatRot(worldTransform_[1], viewContainer2);
+	//AfinMatRot(worldTransform_[1], viewP);
 	AfinTransform(worldTransform_[1]);
-
+	worldTransform_[1].matWorld_.m[3][0] = 0;
+	worldTransform_[1].matWorld_.m[3][1] = 0;
+	worldTransform_[1].matWorld_.m[3][2] = 0;
 	worldTransform_[1].TransferMatrix();
-
-	if (input_->PushKey(DIK_A)) {
-		viewSelct = 1;
-	}
-	else if (input_->PushKey(DIK_S)) {
-		viewSelct = 0;
-	}
 
 	//内積の値
 	debugText_->SetPos(50, 50);
@@ -114,15 +105,15 @@ void GameScene::Update() {
 	debugText_->SetPos(50, 70);
 	debugText_->Printf(
 		"debugCameraPosition:(x %f\n,y %f\n,z %f\n)", eyes.x, eyes.y, eyes.z);
-	//視点の座標
-	debugText_->SetPos(50, 190);
-	debugText_->Printf(
-		"debugCameraPosition:(x %f\n,y %f\n,z %f\n)", trans.x, trans.y, trans.z);
-	//視点の座標
-	debugText_->SetPos(50, 170);
-	debugText_->Printf(
-		"debugCameraPosition:(x %f\n,y %f\n,z %f\n)", up.x, up.y, up.z);
-	//表か裏か
+	////視点の座標
+	//debugText_->SetPos(50, 190);
+	//debugText_->Printf(
+	//	"debugCameraPosition:(x %f\n,y %f\n,z %f\n)", trans.x, trans.y, trans.z);
+	////視点の座標
+	//debugText_->SetPos(50, 170);
+	//debugText_->Printf(
+	//	"debugCameraPosition:(x %f\n,y %f\n,z %f\n)", up.x, up.y, up.z);
+	////表か裏か
 	if (intterProdict > 0) {
 		debugText_->SetPos(50, 90);
 		debugText_->Printf(
@@ -136,19 +127,34 @@ void GameScene::Update() {
 	}
 	debugText_->SetPos(50, 120);
 	debugText_->Printf(
-		"%f%f%f", worldTransform_[1].translation_.x, worldTransform_[1].translation_.y, worldTransform_[1].translation_.z);
+		"%f	%f	%f", eyes.x, eyes.y, eyes.z);
 
-	if (viewSelct == 0) {
-		debugText_->SetPos(50, 150);
-		debugText_->Printf(
-			"viewProjection:debugCamera");
-	}
-	else
-	{
-		debugText_->SetPos(50, 150);
-		debugText_->Printf(
-			"viewProjection:viewProjection");
-	}
+	debugText_->SetPos(50, 140);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", worldTransform_[1].matWorld_.m[0][0], worldTransform_[1].matWorld_.m[0][1], worldTransform_[1].matWorld_.m[0][2]);
+	debugText_->SetPos(50, 160);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", worldTransform_[1].matWorld_.m[1][0], worldTransform_[1].matWorld_.m[1][1], worldTransform_[1].matWorld_.m[1][2]);
+	debugText_->SetPos(50, 180);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", worldTransform_[1].matWorld_.m[2][0], worldTransform_[1].matWorld_.m[2][1], worldTransform_[1].matWorld_.m[2][2]);
+	debugText_->SetPos(50, 200);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", worldTransform_[1].matWorld_.m[3][0], worldTransform_[1].matWorld_.m[3][1], worldTransform_[1].matWorld_.m[3][2]);
+
+	debugText_->SetPos(50,240);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", viewContainer.m[0][0], viewContainer.m[0][1], viewContainer.m[0][2]);
+	debugText_->SetPos(50,260);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", viewContainer.m[1][0], viewContainer.m[1][1], viewContainer.m[1][2]);
+	debugText_->SetPos(50, 280);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", viewContainer.m[2][0], viewContainer.m[2][1], viewContainer.m[2][2]);
+	debugText_->SetPos(50, 300);
+	debugText_->Printf(
+		"x  %f	y  %f	z  %f", viewContainer.m[3][0], viewContainer.m[3][1], viewContainer.m[3][2]);
+
 }
 
 void GameScene::Draw() {
@@ -179,10 +185,15 @@ void GameScene::Draw() {
 	/// </summary>
 	//model_->Draw(worldTransform_[0], viewProjection_, textureHandle_);
 	//pModel_->Draw(worldTransform_[1], viewProjection_, textureHandle_);
+	//ライン描画が参照するビュープロジェクションを指定する（アドレス渡し）
+
 	model_->Draw(worldTransform_[0], debugCamera_->GetViewProjection(), textureHandle_);
 	pModel_->Draw(worldTransform_[1], debugCamera_->GetViewProjection(), textureHandle_);
 
-
+	for (int i = 0; i < 4; i++) {
+		PrimitiveDrawer::GetInstance()->DrawLine3d(vertex_[eageList_[i][0]], vertex_[eageList_[i][1]], Vector4(0xff, 0xff, 0xff, 0xff));
+	}
+	PrimitiveDrawer::GetInstance()->DrawLine3d(Vector3(0, 0, 0), n1, Vector4(0xff, 0xff, 0xff, 0xff));
 	/*model_->Draw(worldTransform_[0], debugCamera_->GetViewProjection());
 	pModel_->Draw(worldTransform_[1], debugCamera_->GetViewProjection());*/
 	/*if (viewSelct == 1) {
@@ -194,11 +205,7 @@ void GameScene::Draw() {
 	// 3Dオブジェクト描画後処理
 	Model::PostDraw();
 
-	//ライン描画が参照するビュープロジェクションを指定する（アドレス渡し）
-	for (int i = 0; i < 4; i++) {
-		PrimitiveDrawer::GetInstance()->DrawLine3d(vertex_[eageList_[i][0]], vertex_[eageList_[i][1]], Vector4(0xff, 0xff, 0xff, 0xff));
-	}
-	PrimitiveDrawer::GetInstance()->DrawLine3d(Vector3(0, 0, 0), n1, Vector4(0xff, 0xff, 0xff, 0xff));
+
 #pragma endregion
 
 #pragma region 前景スプライト描画
@@ -440,6 +447,115 @@ void GameScene::MatrixIdentity(Matrix4& pOut)
 	pOut.m[3][3] = 1.0f;
 }
 
+Matrix4 GameScene::MakeInverse(const Matrix4* mat)
+{
+	assert(mat);
+
+	//掃き出し法を行う行列
+	float sweep[4][8]{};
+	//定数倍用
+	float constTimes = 0.0f;
+	//許容する誤差
+	float MAX_ERR = 1e-10f;
+	//戻り値用
+	Matrix4 retMat;
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			//weepの左側に逆行列を求める行列をセット
+			sweep[i][j] = mat->m[i][j];
+
+			//sweepの右側に単位行列をセット
+			sweep[i][4 + j] = MakeIdentity().m[i][j];
+		}
+	}
+
+	//全ての列の対角成分に対する繰り返し
+	for (int i = 0; i < 4; i++)
+	{
+		//最大の絶対値を注目対角成分の絶対値と仮定
+		float max = std::fabs(sweep[i][i]);
+		int maxIndex = i;
+
+		//i列目が最大の絶対値となる行を探す
+		for (int j = i + 1; j < 4; j++)
+		{
+			if (std::fabs(sweep[j][i]) > max)
+			{
+				max = std::fabs(sweep[j][i]);
+				maxIndex = j;
+			}
+		}
+
+		if (fabs(sweep[maxIndex][i]) <= MAX_ERR)
+		{
+			//逆行列は求められない
+			return MakeIdentity();
+		}
+
+		//操作(1):i行目とmaxIndex行目を入れ替える
+		if (i != maxIndex)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				float tmp = sweep[maxIndex][j];
+				sweep[maxIndex][j] = sweep[i][j];
+				sweep[i][j] = tmp;
+			}
+		}
+
+		//sweep[i][i]に掛けると1になる値を求める
+		constTimes = 1 / sweep[i][i];
+
+		//操作(2):p行目をa倍する
+		for (int j = 0; j < 8; j++)
+		{
+			//これによりsweep[i][i]が1になる
+			sweep[i][j] *= constTimes;
+		}
+
+		//操作(3)によりi行目以外の行のi列目を0にする
+		for (int j = 0; j < 4; j++)
+		{
+			if (j == i)
+			{
+				//i行目はそのまま
+				continue;
+			}
+
+			//i行目に掛ける値を求める
+			constTimes = -sweep[j][i];
+
+			for (int k = 0; k < 8; k++)
+			{
+				//j行目にi行目をa倍した行を足す
+				//これによりsweep[j][i]が0になる
+				sweep[j][k] += sweep[i][k] * constTimes;
+			}
+		}
+	}
+
+	//sweepの右半分がmatの逆行列
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			retMat.m[i][j] = sweep[i][4 + j];
+		}
+	}
+
+	return retMat;
+}
+
+Matrix4 GameScene::MakeIdentity()
+{
+	Matrix4 mat;
+	MatrixIdentity(mat);
+	return mat;
+}
+
 void GameScene::matRotCopy(WorldTransform& worldTransform_, Matrix4& pOut)
 {
 	Matrix4 matRot;
@@ -485,7 +601,7 @@ void GameScene::matRotCopy(WorldTransform& worldTransform_, Matrix4& pOut)
 	pOut = matRot;
 }
 
-Matrix4 GameScene::MatrixLookAtlH(Matrix4& pOut, Vector3* TargetPos, Vector3* playerPos, Vector3* pUp, float intterProdict)
+Matrix4 GameScene::MatrixLookAtlH(Matrix4& pOut, Vector3* TargetPos, Vector3* playerPos, Vector3* pUp)
 {
 	Vector3 zaxis;
 	Vector3 xaxis;
@@ -495,18 +611,31 @@ Matrix4 GameScene::MatrixLookAtlH(Matrix4& pOut, Vector3* TargetPos, Vector3* pl
 	zaxis.x = { playerPos->x - TargetPos->x };
 	zaxis.y = { playerPos->y - TargetPos->y };
 	zaxis.z = { playerPos->z - TargetPos->z };
+
 	Vec3Normalize(&zaxis, &zaxis);
-	Vec3Normalize(&yaxis, pUp);
-	Vec3Cross(&xaxis, &yaxis, &zaxis);
+	/*Vec3Normalize(&yaxis, pUp);*/
+	Vec3Cross(&xaxis, pUp, &zaxis);
 	Vec3Normalize(&xaxis, &xaxis);
 	Vec3Cross(&yaxis, &zaxis, &xaxis);
 	Vec3Normalize(&yaxis, &yaxis);
 
-
+	//if (intterProdict < 0) {
 		pOut.m[0][0] = xaxis.x; pOut.m[0][1] = xaxis.y; pOut.m[0][2] = xaxis.z; pOut.m[0][3] = 0;
 		pOut.m[1][0] = yaxis.x; pOut.m[1][1] = yaxis.y; pOut.m[1][2] = yaxis.z; pOut.m[1][3] = 0;
 		pOut.m[2][0] = zaxis.x; pOut.m[2][1] = zaxis.y; pOut.m[2][2] = zaxis.z; pOut.m[2][3] = 0;
 		pOut.m[3][0] = 0; pOut.m[3][1] = 0; pOut.m[3][2] = 0; pOut.m[3][3] = 1;
+	//}
+	/*else
+	{
+		pOut.m[0][0] = -xaxis.x; pOut.m[0][1] = -xaxis.y; pOut.m[0][2] = -xaxis.z; pOut.m[0][3] = 0;
+		pOut.m[1][0] = -yaxis.x; pOut.m[1][1] = -yaxis.y; pOut.m[1][2] = -yaxis.z; pOut.m[1][3] = 0;
+		pOut.m[2][0] = -zaxis.x; pOut.m[2][1] = -zaxis.y; pOut.m[2][2] = -zaxis.z; pOut.m[2][3] = 0;
+		pOut.m[3][0] = 0; pOut.m[3][1] = 0; pOut.m[3][2] = 0; pOut.m[3][3] = 1;
+	}*/
+	//pOut.m[0][0] = xaxis.x; pOut.m[0][1] = yaxis.x; pOut.m[0][2] = zaxis.x; pOut.m[0][3] = 0;
+	//pOut.m[1][0] = xaxis.y; pOut.m[1][1] = yaxis.y; pOut.m[1][2] = zaxis.y; pOut.m[1][3] = 0;
+	//pOut.m[2][0] = xaxis.z; pOut.m[2][1] = yaxis.z; pOut.m[2][2] = zaxis.z; pOut.m[2][3] = 0;
+	//pOut.m[3][0] = -Vec3Dot(&xaxis,&eyes); pOut.m[3][1] = -Vec3Dot(&yaxis,&eyes); pOut.m[3][2] = -Vec3Dot(&zaxis,&eyes); pOut.m[3][3] = 1;
 
 	return pOut;
 }
@@ -531,16 +660,17 @@ int GameScene::Normalize(Vector3* pV)
 	return 1;
 }
 
-void GameScene::GetInvRotateMat(Vector3* worldPos, Vector3* Targetpos, Matrix4& Rot, float intterProdict)
+void GameScene::GetInvRotateMat(Vector3* BillPos, Vector3* Targetpos, Matrix4& Rot,Vector3 up)
 {
 
 	MatrixIdentity(Rot);
-	MatrixLookAtlH(Rot, worldPos, Targetpos, &up, intterProdict);
-	MatrixInverse(Rot, Rot);
+	MatrixLookAtlH(Rot, Targetpos, BillPos, &up);
+	/*MatrixInverse(Rot, Rot);*/
+	MakeInverse(&Rot);
 
-	//Rot.m[3][0] = 0.0f;
-	//Rot.m[3][1] = 0.0f;
-	//Rot.m[3][2] = 0.0f;
+	Rot.m[3][0] = 0.0f;
+	Rot.m[3][1] = 0.0f;
+	Rot.m[3][2] = 0.0f;
 }
 
 void GameScene::AfinTransform(WorldTransform& worldTransform_)

@@ -59,13 +59,17 @@ public: // メンバ関数
 
 	void MatrixIdentity(Matrix4& pOut);
 
+	Matrix4 MakeInverse(const Matrix4* mat);
+
+	Matrix4 MakeIdentity();
+
 	void matRotCopy(WorldTransform& worldTransform_, Matrix4& pOut);
 
-	Matrix4 MatrixLookAtlH(Matrix4& pOut, Vector3* Eye, Vector3* At, Vector3* pUp, float intterProdict);
+	Matrix4 MatrixLookAtlH(Matrix4& pOut, Vector3* Eye, Vector3* At, Vector3* pUp);
 
 	int Normalize(Vector3* pV);
 
-	void GetInvRotateMat(Vector3* worldPos, Vector3* Targetpos,Matrix4& Rot, float intterProdict);
+	void GetInvRotateMat(Vector3* worldPos, Vector3* Targetpos,Matrix4& Rot,Vector3 up);
 
 	void AfinTransform(WorldTransform& worldTransform_);
 
@@ -105,6 +109,7 @@ private: // メンバ変数
 	Vector3  trans = { 0,0,0 };//視点ベクトル
 	Vector3  up = { 0,1,0 };//視点ベクトル
 
+	Vector3 viewP={0,0,0};
 
 	//ワールドトランスフォーム
 	WorldTransform worldTransform_[3];

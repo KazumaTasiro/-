@@ -149,6 +149,9 @@
     <ClInclude Include="3d\PrimitiveDrawer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="scene\Mat4.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resources\shaders\SpritePS.hlsl">
